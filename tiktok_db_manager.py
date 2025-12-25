@@ -108,6 +108,7 @@ class TikTokDBManager(BaseDB):
                 , target_country        VARCHAR(10)     NOT NULL
                 , last_used             DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP
                 , is_active             TINYINT(1)      NOT NULL    DEFAULT 1
+                , details               VARCHAR(100)    COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'search_wordの意味や日本語メモ'
             )
             COMMENT 'フィード最適化のための検索キーワード'
         ;

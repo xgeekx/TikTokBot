@@ -1,6 +1,8 @@
 # =====================================================================
 # tiktok_appium_helper.py (V94 - フォールバック・セレクタ戦略)
 # =====================================================================
+import socket
+import textwrap
 
 from appium import webdriver
 from appium.options.common import AppiumOptions
@@ -131,9 +133,63 @@ class TiktokAppiumHelper:
     # -----------------------------------------------------------------
     # (クラス初期化・システム関数 - 変更なし)
     # -----------------------------------------------------------------
+    @classmethod
+    def get_free_port(cls):
+        """OSから現在空いているポート番号を動的に取得する"""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            return s.getsockname()[1]
 
     @classmethod
     def initialize_driver(cls, device_name: str, udid: str, adb_host: str, adb_port: int):
+        """
+        空きポートの自動取得と接続リトライを組み合わせてAppiumを初期化
+        """
+        max_retries = 3
+        last_exception = None
+
+        for attempt in range(1, max_retries + 1):
+            # 毎回新しい空きポートを取得（前回の失敗がポート競合だった場合の対策）
+            auto_port = cls.get_free_port()
+            logger.info(f"ACTION: [Attempt {attempt}] Appium connecting... (UDID: {udid}, Auto-port: {auto_port})")
+
+            caps = APPIUM_CAPABILITIES_BASE.copy()
+            caps.update({
+                'appium:deviceName': device_name,
+                'appium:udid': udid,
+                'appium:systemPort': auto_port
+            })
+
+            options = AppiumOptions()
+            options.load_capabilities(caps)
+
+            log_msg = textwrap.dedent(f"""
+                        ==================================================
+                        [APPIUM CONNECTION ATTEMPT: {attempt}/{max_retries}]
+                        --------------------------------------------------
+                        * DEVICE_NAME : {device_name}
+                        * UDID        : {udid}
+                        * ADB_HOST    : {adb_host}
+                        * ADB_PORT    : {adb_port}
+                        * SYSTEM_PORT : {auto_port} (Auto-assigned)
+                        * APPIUM_URL  : {APPIUM_URL}
+                        ==================================================
+                    """).strip()
+            logger.info(f"\n{log_msg}")
+            try:
+                driver = webdriver.Remote(APPIUM_URL, options=options)
+                logger.info(f"STATUS: Connected successfully via port {auto_port}")
+                return cls(driver, TIKTOK_PACKAGE_NAME, adb_host, adb_port)
+            except Exception as e:
+                last_exception = e
+                logger.warning(f"RETRY: Connection failed on port {auto_port}: {e}")
+                time.sleep(2)  # 次の試行まで少し待機
+
+        logger.error(f"FATAL: Failed to connect to Appium after {max_retries} attempts.")
+        raise last_exception
+
+    @classmethod
+    def old_initialize_driver(cls, device_name: str, udid: str, adb_host: str, adb_port: int):
         logger.info(f"ACTION: [START] Initializing Appium for Device: {device_name} ({udid}) at {adb_host}:{adb_port}")
         caps = APPIUM_CAPABILITIES_BASE.copy()
         caps['appium:deviceName'] = device_name
