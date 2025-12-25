@@ -1,0 +1,29 @@
+select
+video_id
+,url
+,channel_name
+,likes_count
+,caption_text
+,country_code
+,created_at
+,last_processed_at
+,analysis_status
+,ai_screenshot_verdict
+,ai_translation_verdict
+,user_reviewed_at
+,feature_person_detected
+,found_source
+,searched_by_keyword
+,video_summary
+,full_translation_text
+,severity_score
+from tiktok_videos
+order by created_at desc limit 1;
+
+
+Gemini:
+このチャット文章で質問や命令していないことへの返答は1文字もするな。このチャット文章で質問や命令していることに対して返答を必ず行え。
+
+
+
+select count(*) from tiktok_videos;

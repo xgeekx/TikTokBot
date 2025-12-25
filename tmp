@@ -1,0 +1,30 @@
+def tap_first_video_result_by_location(self):
+    """
+    動画タブへの切り替え後、描画を待ってから左上を物理タップする。
+    """
+    try:
+        # 1. 描画待ち：動画一覧の「外箱（GridView）」が出るまで最大15秒待機
+        # これが出ないうちにタップしても空振りする
+        self.logger.info("ACTION: Waiting for GridView to render...")
+        wait = WebDriverWait(self.driver, 15)
+
+        # IDがもし変わっていても、GridViewというクラス自体は不変なのでこれを使う
+        wait.until(EC.presence_of_element_located((AppiumBy.CLASS_NAME, "android.widget.GridView")))
+
+        # 2. さらに念押しで、中身が詰まるまで1〜2秒だけ猶予を置く
+        time.sleep(2)
+
+        # 3. 座標計算（左上25%地点）
+        size = self.driver.get_window_size()
+        target_x = size['width'] * 0.25
+        target_y = size['height'] * 0.25
+
+        self.logger.info(f"ACTION: Tapping video area at ({target_x}, {target_y})")
+
+        # 4. 実行
+        self.driver.tap([(target_x, target_y)])
+        return True
+
+    except Exception as e:
+        self.logger.error(f"ERROR: Rendering timeout or tap failed: {e}")
+        return False

@@ -1,0 +1,10 @@
+C:\Windows\System32>adb reboot
+error: more than one device/emulator
+
+C:\Windows\System32>adb -s 00744a0904098e91 shell settings put global oppo_optimization_enable 0
+
+C:\Windows\System32>adb -s 00744a0904098e91 shell dumpsys deviceidle whitelist +io.appium.settings
+adb -s 00744a0904098e91 shell dumpsys deviceidle whitelist +io.appium.uiautomator2.server
+adb -s 00744a0904098e91 shell dumpsys deviceidle whitelist +com.ss.android.ugc.trillAdded: io.appium.settings
+
+C:\Windows\System32>adb -s 00744a0904098e91 reboot
